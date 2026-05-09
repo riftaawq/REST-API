@@ -1,24 +1,21 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import delete
 from models.book import BookORM
+from schemas.book import BookCreate
+from typing import Optional
 from uuid import UUID
 
-async def get_all_books(db: AsyncSession, limit: int, offset: int):
-    result = await db.execute(select(BookORM).limit(limit).offset(offset))
+async def get_all_books(db: AsyncSession, limit: int, cursor: Optional[UUID] = None):
+    stmt = select(BookORM).order_by(BookORM.id).limit(limit)
+    if cursor:
+        stmt = stmt.where(BookORM.id > cursor)
+    
+    result = await db.execute(stmt)
     return result.scalars().all()
 
-async def get_book_by_id(db: AsyncSession, book_id: UUID):
-    result = await db.execute(select(BookORM).filter(BookORM.id == book_id))
-    return result.scalar_one_or_none()
-
-async def add_book(db: AsyncSession, book_data: dict):
-    book = BookORM(**book_data)
-    db.add(book)
+async def create_book(db: AsyncSession, book: BookCreate):
+    new_book = BookORM(**book.model_dump())
+    db.add(new_book)
     await db.commit()
-    await db.refresh(book)
-    return book
-
-async def delete_book(db: AsyncSession, book_id: UUID):
-    await db.execute(delete(BookORM).where(BookORM.id == book_id))
-    await db.commit()
+    await db.refresh(new_book)
+    return new_book

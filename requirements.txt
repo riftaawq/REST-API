@@ -5,3 +5,4 @@ pydantic-mongo
 pytest
 pytest-asyncio
 httpx
+certifi

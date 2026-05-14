@@ -1,8 +1,7 @@
 fastapi
 uvicorn
-pydantic
-sqlalchemy
-asyncpg
+motor
+pydantic-mongo
 pytest
 pytest-asyncio
 httpx

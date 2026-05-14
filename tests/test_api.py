@@ -10,24 +10,26 @@ def event_loop():
     loop.close()
 
 @pytest.mark.asyncio
-async def test_create_book():
+async def test_crud_lifecycle():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        response = await ac.post("/books", json={
-            "title": "1984",
-            "author": "George Orwell",
-            "description": "Dystopian novel",
+        create_res = await ac.post("/books", json={
+            "title": "Test Book",
+            "author": "Author",
             "status": "available",
-            "year": 1949
+            "year": 2024
         })
-    assert response.status_code == 201
-    assert response.json()["title"] == "1984"
+        book_id = create_res.json()["_id"]
+        assert create_res.status_code == 201
 
-@pytest.mark.asyncio
-async def test_get_books():
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        response = await ac.get("/books?limit=5")
-    assert response.status_code == 200
-    data = response.json()
-    assert "items" in data
-    assert "next_cursor" in data
-    assert isinstance(data["items"], list)
+        update_res = await ac.put(f"/books/{book_id}", json={"title": "Updated Title"})
+        assert update_res.status_code == 200
+        assert update_res.json()["title"] == "Updated Title"
+
+        get_res = await ac.get(f"/books/{book_id}")
+        assert get_res.status_code == 200
+
+        del_res = await ac.delete(f"/books/{book_id}")
+        assert del_res.status_code == 204
+
+        ver_res = await ac.get(f"/books/{book_id}")
+        assert ver_res.status_code == 404

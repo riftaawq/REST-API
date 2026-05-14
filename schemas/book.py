@@ -1,7 +1,7 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing import List, Optional
-from uuid import UUID
 from enum import Enum
+from pydantic_mongo import ObjectIdField
 
 class BookStatus(str, Enum):
     AVAILABLE = "available"
@@ -17,11 +17,18 @@ class BookBase(BaseModel):
 class BookCreate(BookBase):
     pass
 
+class BookUpdate(BaseModel):
+    title: Optional[str] = None
+    author: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[BookStatus] = None
+    year: Optional[int] = None
+
 class BookResponse(BookBase):
-    id: UUID
+    id: ObjectIdField = Field(alias="_id")
     
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True)
 
 class PaginatedBooksResponse(BaseModel):
     items: List[BookResponse]
-    next_cursor: Optional[UUID] = None
+    total: int
